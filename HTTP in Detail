@@ -1,0 +1,4 @@
+lab name : HTTP in Detail link: https://tryhackme.com/room/httpindetail
+
+what is a URL?
+ A URL is predominantly an instruction on how to access a resource on the internet. The below image shows what a URL looks like with all of its features (it does not use all features in every request).
