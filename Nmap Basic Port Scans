@@ -1,0 +1,321 @@
+# Nmap - Basic Port Scans
+
+## Introduction
+
+Finding a live host is only the first step. Once we know a machine is online, the next thing we want to know is **what services are running on it**. That's exactly what port scanning helps us do.
+
+Every service running on a system listens on a port. For example, SSH usually runs on **22**, HTTP on **80**, HTTPS on **443**, and DNS on **53**. By scanning these ports, we can quickly understand what the target is exposing to the network.
+
+In this room I learned the three basic scan types that every beginner should know:
+
+- TCP Connect Scan (`-sT`)
+- TCP SYN Scan (`-sS`)
+- UDP Scan (`-sU`)
+
+I also learned how to choose specific ports, scan all ports, speed up scans, and control how aggressive Nmap should be.
+
+---
+
+# Understanding Ports
+
+Think of an IP address as the address of a building and ports as the different doors inside that building.
+
+Even if you know where the building is, you still need to find which door is open. That's exactly what Nmap does.
+
+An open port usually means a service is running and accepting connections.
+
+Some common ports are:
+
+| Port | Service |
+|------:|---------|
+| 22 | SSH |
+| 53 | DNS |
+| 80 | HTTP |
+| 443 | HTTPS |
+| 445 | SMB |
+
+---
+
+# 1. TCP Connect Scan (-sT)
+
+A TCP Connect Scan performs the complete TCP three-way handshake.
+
+```
+Client                  Target
+
+SYN  ------------------>
+      <----------------- SYN/ACK
+ACK  ------------------>
+```
+
+If the handshake completes successfully, Nmap marks the port as **Open**.
+
+### Command
+
+```bash
+nmap -sT 10.10.10.5
+```
+
+### Example
+
+```bash
+nmap -sT scanme.nmap.org
+```
+
+Example Output
+
+```
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+```
+
+### When to use
+
+- When running Nmap without root privileges.
+- When compatibility is more important than stealth.
+
+### Keep in mind
+
+Since the connection is fully established, this scan is easier to detect and will usually appear in the target's logs.
+
+---
+
+# 2. TCP SYN Scan (-sS)
+
+TCP SYN Scan is often called a **Stealth Scan**.
+
+Instead of completing the TCP handshake, Nmap only sends a SYN packet.
+
+If the target responds with SYN/ACK, Nmap knows the port is open and immediately sends a Reset (RST) packet to terminate the connection.
+
+```
+Client                  Target
+
+SYN  ------------------>
+      <----------------- SYN/ACK
+RST  ------------------>
+```
+
+Since the connection is never fully established, this scan is generally faster and creates less logging.
+
+### Command
+
+```bash
+sudo nmap -sS 10.10.10.5
+```
+
+### Example
+
+```bash
+sudo nmap -sS scanme.nmap.org
+```
+
+Example Output
+
+```
+PORT     STATE SERVICE
+22/tcp   open  ssh
+443/tcp  open  https
+```
+
+### When to use
+
+- Most penetration testing labs
+- Faster scans
+- Less noisy than TCP Connect Scan
+
+### Note
+
+Root privileges are required because Nmap needs to create raw packets.
+
+---
+
+# 3. UDP Scan (-sU)
+
+Unlike TCP, UDP doesn't perform a handshake.
+
+That makes UDP scanning slower because open ports often don't reply at all.
+
+If a port is closed, the target usually responds with an ICMP Port Unreachable message.
+
+### Scan all UDP ports
+
+```bash
+sudo nmap -sU 10.10.10.5
+```
+
+### Scan a specific UDP port
+
+```bash
+sudo nmap -sU -p 161 10.10.10.5
+```
+
+Example Output
+
+```
+PORT      STATE  SERVICE
+161/udp   closed snmp
+```
+
+### Why is UDP scanning slow?
+
+Since UDP doesn't guarantee a response, Nmap has to wait before deciding whether a port is open or filtered. Because of this, UDP scans usually take much longer than TCP scans.
+
+---
+
+# Choosing Ports to Scan
+
+## Scan Every Port
+
+```bash
+nmap -p- 10.10.10.5
+```
+
+Scans all **65535** TCP ports.
+
+Useful when you don't want to miss anything.
+
+---
+
+## Scan Well-Known Ports
+
+```bash
+nmap -p1-1023 10.10.10.5
+```
+
+Scans ports **1 through 1023**.
+
+This covers most common services.
+
+---
+
+## Scan Specific Ports
+
+```bash
+nmap -p22,80,443 10.10.10.5
+```
+
+Only scans the ports you specify.
+
+Example:
+
+```
+22/tcp   open   ssh
+80/tcp   open   http
+443/tcp  open   https
+```
+
+---
+
+## Fast Scan
+
+```bash
+nmap -F 10.10.10.5
+```
+
+Scans only the **100 most common ports**.
+
+Great for quick reconnaissance.
+
+---
+
+## Scan Ports Sequentially
+
+```bash
+nmap -r 10.10.10.5
+```
+
+Normally Nmap randomizes the order of ports.
+
+The `-r` option scans them in numerical order.
+
+---
+
+# Controlling Scan Speed
+
+Sometimes scanning as fast as possible isn't always the best choice.
+
+Nmap lets you control how aggressive the scan should be.
+
+## Timing Templates
+
+Very slow
+
+```bash
+nmap -T0 target
+```
+
+Normal
+
+```bash
+nmap -T3 target
+```
+
+Very aggressive
+
+```bash
+nmap -T5 target
+```
+
+Higher timing values make scans faster but can also increase the chances of being detected or missing responses.
+
+---
+
+## Limit Scan Rate
+
+Maximum 50 packets every second
+
+```bash
+nmap --max-rate 50 target
+```
+
+---
+
+Minimum 15 packets every second
+
+```bash
+nmap --min-rate 15 target
+```
+
+---
+
+## Increase Parallelism
+
+```bash
+nmap --min-parallelism 100 target
+```
+
+Allows Nmap to send many probes at the same time, making scans faster on stable networks.
+
+---
+
+# Commands Covered
+
+| Option | Purpose |
+|---------|---------|
+| `-sT` | TCP Connect Scan |
+| `-sS` | TCP SYN (Stealth) Scan |
+| `-sU` | UDP Scan |
+| `-p-` | Scan all ports |
+| `-p1-1023` | Scan ports 1 to 1023 |
+| `-F` | Scan the 100 most common ports |
+| `-r` | Scan ports in order |
+| `-T0` to `-T5` | Control scan speed |
+| `--max-rate` | Set maximum packet rate |
+| `--min-rate` | Set minimum packet rate |
+| `--min-parallelism` | Send multiple probes simultaneously |
+
+---
+
+# What I Learned
+
+This room helped me understand that port scanning isn't just about typing `nmap <target>` and waiting for results. Different scan types have different purposes.
+
+A TCP Connect Scan is simple and works without special privileges, but it's also the easiest to detect. TCP SYN Scan is much faster and quieter, which is why it's commonly used during penetration testing. UDP scans are slower because UDP doesn't respond the same way TCP does, but they're still important for discovering services like DNS and SNMP.
+
+Overall, this room gave me a much better understanding of how Nmap communicates with a target and how choosing the right scan can save time while collecting better information.
+
+
+used chatgpt to correct my gramatical mistake and paraphrase.
+link : https://tryhackme.com/room/nmap02
