@@ -1,0 +1,41 @@
+I like the direction you're taking. Instead of making it sound like a polished blog, make it feel like **"these are my notes after finishing the room."** A few minor grammar imperfections actually make it feel more authentic.
+
+Here's a GitHub post/README ending you could use:
+
+---
+
+# Wrapping Up
+
+This room was all about **finding which hosts are actually alive before jumping into port scanning**. At first it looked like there was only one way to do it, but Nmap actually gives us multiple techniques depending on the network and what packets are allowed through.
+
+I got to try different host discovery methods using **ARP, ICMP, TCP, and UDP** and also learned when each one makes more sense. One thing I realised is that **host discovery isn't just a "first step" because everyone says so**. It actually saves time, avoids scanning machines that aren't even online, and makes the whole recon process cleaner.
+
+### Commands covered
+
+| Scan Type              | Example                           |
+| ---------------------- | --------------------------------- |
+| ARP Scan               | `nmap -PR -sn <target>`           |
+| ICMP Echo Scan         | `nmap -PE -sn <target>`           |
+| ICMP Timestamp Scan    | `nmap -PP -sn <target>`           |
+| ICMP Address Mask Scan | `nmap -PM -sn <target>`           |
+| TCP SYN Ping           | `nmap -PS22,80,443 -sn <target>`  |
+| TCP ACK Ping           | `nmap -PA22,80,443 -sn <target>`  |
+| UDP Ping               | `nmap -PU53,161,162 -sn <target>` |
+
+### Small things i wanna remember
+
+* `-sn` → Host discovery only, no port scan.
+* `-n` → Skip DNS resolution, makes scans a bit faster.
+* `-R` → Always perform reverse DNS lookup.
+* ARP is usually the fastest option on a local network.
+* ICMP isn't always reliable because some hosts block ping requests.
+* TCP and UDP probes can still help find live hosts when ICMP is filtered.
+
+### What i learned
+
+This room made me realise that Nmap isn't just a tool you throw commands at. It has different ways of talking to a host, and picking the right one depends on the situation. Something as simple as discovering live hosts can change based on whether you're on the same network, behind a firewall, or scanning remotely.
+
+Overall, a pretty solid intro to Nmap. Next stop: **Port Scanning.** 
+
+---
+link of room : https://tryhackme.com/room/nmap01
