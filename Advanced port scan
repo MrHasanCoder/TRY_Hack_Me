@@ -1,0 +1,290 @@
+# Nmap - Advanced Port Scans
+
+> My notes from the TryHackMe room **Nmap: Advanced Port Scans**.  
+> These are written in my own words while learning the different scan techniques Nmap offers beyond the basic SYN and Connect scans.
+
+---
+
+## Why learn Advanced Port Scans?
+
+Not every target is going to respond the same way. Firewalls, IDS/IPS, and filtering rules can change how packets are handled, so using the default scan isn't always enough.
+
+This room was all about understanding **how different TCP flags affect a scan** and learning when a certain scan type makes more sense than another. Some scans try to be stealthier, some help identify firewall rules, while others are mainly useful for learning how TCP behaves.
+
+I also realised that no scan is "the best". It really depends on the target and what you're trying to find.
+
+---
+
+# Scan Types Covered
+
+## TCP Null Scan (`-sN`)
+
+Sends a packet with **no TCP flags** set.
+
+- Closed ports usually reply with a RST packet.
+- Open or filtered ports usually don't reply.
+
+Useful when testing systems that follow the RFC behaviour correctly.
+
+```bash
+sudo nmap -sN <target>
+```
+
+---
+
+## TCP FIN Scan (`-sF`)
+
+Instead of sending a SYN packet, Nmap sends only the **FIN** flag.
+
+If a port is closed, it'll normally send back a RST.
+
+```bash
+sudo nmap -sF <target>
+```
+
+---
+
+## TCP Xmas Scan (`-sX`)
+
+This scan sets the **FIN, PSH and URG** flags together.
+
+The packet is called an "Xmas Tree" packet because several flags are lit up at once.
+
+```bash
+sudo nmap -sX <target>
+```
+
+---
+
+## TCP Maimon Scan (`-sM`)
+
+A variation of the FIN scan that combines **FIN + ACK**.
+
+Works against some BSD-based systems but isn't commonly useful today.
+
+```bash
+sudo nmap -sM <target>
+```
+
+---
+
+## TCP ACK Scan (`-sA`)
+
+This scan isn't really used to find open ports.
+
+Instead it helps determine if ports are **filtered or unfiltered**, making it useful for firewall reconnaissance.
+
+```bash
+sudo nmap -sA <target>
+```
+
+---
+
+## TCP Window Scan (`-sW`)
+
+Very similar to an ACK scan but also looks at the **TCP Window Size** in the response.
+
+Some operating systems leak enough information through the window size to distinguish open and closed ports.
+
+```bash
+sudo nmap -sW <target>
+```
+
+---
+
+## Custom TCP Flag Scan
+
+You can manually choose which TCP flags to send.
+
+Example:
+
+```bash
+sudo nmap --scanflags URGACKPSHRSTSYNFIN <target>
+```
+
+Pretty useful when experimenting or trying to bypass certain filtering rules.
+
+---
+
+# Spoofing Techniques
+
+## Spoof Source IP
+
+Makes packets appear to come from another IP address.
+
+```bash
+sudo nmap -S <Spoofed-IP> <target>
+```
+
+Normally requires routing to be configured properly or responses won't come back.
+
+---
+
+## Spoof MAC Address
+
+Changes the MAC address used during the scan.
+
+```bash
+sudo nmap --spoof-mac 00:11:22:33:44:55 <target>
+```
+
+Can also spoof using vendor names.
+
+Example:
+
+```bash
+sudo nmap --spoof-mac Dell <target>
+```
+
+---
+
+## Decoy Scan (`-D`)
+
+Makes the target think multiple hosts are scanning it instead of just you.
+
+```bash
+sudo nmap -D RND:5 <target>
+```
+
+or
+
+```bash
+sudo nmap -D IP1,IP2,ME <target>
+```
+
+Not invisible, but definitely makes attribution harder.
+
+---
+
+## Idle (Zombie) Scan (`-sI`)
+
+Probably one of the coolest scans I learned.
+
+Instead of scanning directly, Nmap uses an idle "zombie" host to perform the scan.
+
+The target never really sees your machine talking to it.
+
+```bash
+sudo nmap -sI <Zombie-IP> <target>
+```
+
+Finding a suitable zombie host is the difficult part.
+
+---
+
+# Packet Fragmentation
+
+Sometimes security devices inspect full packets.
+
+Fragmenting packets can occasionally help bypass simple filtering rules.
+
+### 8-byte fragments
+
+```bash
+sudo nmap -f <target>
+```
+
+### 16-byte fragments
+
+```bash
+sudo nmap -ff <target>
+```
+
+Modern firewalls usually handle fragmentation pretty well, but it's still a useful feature to know.
+
+---
+
+# Other Useful Options
+
+## Specify Source Port
+
+```bash
+--source-port <port>
+```
+
+Some firewalls trust traffic coming from specific ports like **53** or **20**, so changing the source port can sometimes affect filtering.
+
+---
+
+## Add Random Data
+
+```bash
+--data-length <number>
+```
+
+Pads packets with random bytes.
+
+Mostly useful for testing IDS/IPS behaviour.
+
+---
+
+## Show Why Nmap Made a Decision
+
+```bash
+--reason
+```
+
+One of my favourite options.
+
+Instead of only saying a port is open or closed, Nmap also explains **why** it reached that conclusion.
+
+---
+
+## Verbose Output
+
+```bash
+-v
+```
+
+Shows more information while scanning.
+
+Even more verbose:
+
+```bash
+-vv
+```
+
+---
+
+## Debugging
+
+```bash
+-d
+```
+
+Shows debugging information.
+
+For even more details:
+
+```bash
+-dd
+```
+
+Really useful when you're trying to understand what Nmap is actually doing behind the scenes.
+
+---
+
+# Things I Learned
+
+- Different TCP flags produce different responses from the target.
+- ACK scans are more useful for firewall mapping than finding open ports.
+- Null, FIN and Xmas scans rely heavily on how the operating system implements TCP.
+- Packet fragmentation and spoofing can sometimes bypass weak filtering rules.
+- Idle scans are one of the stealthiest techniques, but they require a suitable zombie host.
+- `--reason` is amazing for understanding scan results instead of blindly trusting them.
+
+---
+
+# Final Thoughts
+
+This room was honestly much more interesting than basic port scanning. Before doing it, I thought Nmap was mostly about running `-sS` and moving on.
+
+Now it makes more sense why Nmap has so many scan types. Each one exists because networks, operating systems, and firewalls don't all behave the same way. Knowing when to use a particular scan is way more important than memorizing every command.
+
+Definitely one of my favourite rooms in the Nmap learning path.
+
+---
+
+## Room
+
+**TryHackMe:** Nmap - Advanced Port Scans
